@@ -257,7 +257,29 @@ async def chat_completions(request: Request, request_data: ChatCompletionRequest
             await http_client.close()
             error_text = error_content.decode('utf-8', errors='replace')
             logger.error(f"Error from Kiro API: {response.status_code} - {error_text}")
-            return Response(status_code=response.status_code, content=error_content)
+            
+            # Пытаемся распарсить JSON ответ от Kiro для извлечения сообщения об ошибке
+            error_message = error_text
+            try:
+                error_json = json.loads(error_text)
+                if "message" in error_json:
+                    error_message = error_json["message"]
+                    if "reason" in error_json:
+                        error_message = f"{error_message} (reason: {error_json['reason']})"
+            except (json.JSONDecodeError, KeyError):
+                pass
+            
+            # Возвращаем ошибку в формате OpenAI API
+            return JSONResponse(
+                status_code=response.status_code,
+                content={
+                    "error": {
+                        "message": error_message,
+                        "type": "kiro_api_error",
+                        "code": response.status_code
+                    }
+                }
+            )
         
         if request_data.stream:
             # Streaming режим
