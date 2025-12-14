@@ -24,6 +24,7 @@
 """
 
 import os
+from pathlib import Path
 from typing import Dict, List
 from dotenv import load_dotenv
 
@@ -51,7 +52,9 @@ PROFILE_ARN: str = os.getenv("PROFILE_ARN", "")
 REGION: str = os.getenv("KIRO_REGION", "us-east-1")
 
 # Путь к файлу с credentials (опционально, альтернатива .env)
-KIRO_CREDS_FILE: str = os.getenv("KIRO_CREDS_FILE", "")
+# Нормализуем путь для кроссплатформенной совместимости (Windows/Linux/macOS)
+_raw_creds_file = os.getenv("KIRO_CREDS_FILE", "")
+KIRO_CREDS_FILE: str = str(Path(_raw_creds_file)) if _raw_creds_file else ""
 
 # ==================================================================================================
 # Kiro API URL Templates
